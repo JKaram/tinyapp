@@ -15,13 +15,21 @@ const urlDatabase = {
   '7xc3lK' : 'http://tsn.ca'
 };
 
+
+function generateRandomString() {
+  return Math.random().toString(36).slice(5)
+ }
+
 app.get("/urls/new", (req, res) => {
   res.render("urls_new");
 });
 
 app.post("/urls", (req, res) => {
-  console.log(req.body);  // Log the POST request body to the console
-  res.send("Ok");         // Respond with 'Ok' (we will replace this)
+  const makeURL = generateRandomString()
+
+  urlDatabase[makeURL] = req.body.longURL;
+  console.log(urlDatabase);  // Log the POST request body to the console
+  res.redirect(`/urls/${makeURL}`)
 });
 
 
@@ -36,14 +44,16 @@ app.get("/urls/:shortURL", (req, res) => {
   res.render("urls_show", templateVars);
 });
 
+app.get("/u/:shortURL", (req, res) => {
+  const longURL = urlDatabase[req.params.shortURL]
+  res.redirect(longURL);
+});
 
 
 app.listen(PORT, () => {
   console.log(`Example app listening on port ${PORT}!`)
 });
 
-function generateRandomString() {
- return Math.random().toString(36).slice(5)
-}
+
 
 // console.log(generateRandomString())
