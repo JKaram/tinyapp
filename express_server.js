@@ -17,6 +17,31 @@ const urlDatabase = {
   '7xc3lK': 'http://tsn.ca'
 };
 
+const users = { 
+  "userRandomID": {
+    id: "userRandomID", 
+    email: "user@example.com", 
+    password: "purple-monkey-dinosaur"
+  },
+ "user2RandomID": {
+    id: "user2RandomID", 
+    email: "user2@example.com", 
+    password: "dishwasher-funk"
+  }
+};
+
+
+
+// return true if email is already in use 
+const checkEmailIsInUse = (object, email) => {
+  const values = Object.values(object).filter(o =>  o.email === email);
+  
+  if (values.length) {
+    return true;
+  }
+  
+  return false;
+};
 // ----- Generate Random String ------ //
 function generateRandomString() {
   return Math.random().toString(36).slice(5)
@@ -33,22 +58,37 @@ app.get("/urls/new", (req, res) => {
 app.post("/urls", (req, res) => {
   const makeURL = generateRandomString()
   urlDatabase[makeURL] = req.body.longURL;
-  console.log('CREATED New URL');  // Log the POST request body to the console
+  console.log('CREATED New URL', req.body.longURL);  // Log the POST request body to the console
   res.redirect(`/urls/${makeURL}`)
 });
 
 // ----- List of URLs ------ //
 app.get("/urls", (req, res) => {
   let templateVars = { urls: urlDatabase , username: req.cookies["username"] };
-  console.log('Main Page', templateVars)
+  console.log('Main Page')
   res.render("urls_index", templateVars);
+});
+
+
+// ----- Register Page ------ //
+app.get("/register", (req, res) => {
+  res.render("urls_register");
+});
+
+// ----- Register Page ------ //
+app.post("/register", (req, res) => {
+  console.log('REGISTER',req.body.email, req.body.password);
+  const idNum = generateRandomString()
+  users[idNum] = { id: idNum, email: req.body.email, password: req.body.password };
+  res.cookie('user_id', req.body.email);
+  console.log(users);
+  res.redirect('/urls');
 });
 
 // ----- Show URL ------ //
 app.get("/urls/:shortURL", (req, res) => {
   let templateVars = { shortURL: req.params.shortURL, longURL: urlDatabase[req.params.shortURL] , username: req.cookies["username"] };
   console.log('SHOW URL', req.params.shortURL)
-  console.log(templateVars);
   res.render("urls_show", templateVars);
 });
 
@@ -78,8 +118,8 @@ app.get("/u/:shortURL", (req, res) => {
 
 // ----- Delete URL ------ //
 app.post("/urls/:shortURL/delete", (req, res) => {
+  console.log('Delete', urlDatabase[req.params.shortURL]);
   delete urlDatabase[req.params.shortURL];
-  console.log('Delete');  // Log the POST request body to the console
   res.redirect(`/urls`)
 });
 
