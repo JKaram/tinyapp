@@ -1,14 +1,35 @@
 <header>
   <nav class="navbar navbar-expand-md navbar-dark bg-success">
     <a class="navbar-brand" href="/urls">TinyApp</a>
-    <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarNavAltMarkup" aria-controls="navbarNavAltMarkup" aria-expanded="false" aria-label="Toggle navigation">
+    <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarNavAltMarkup"
+      aria-controls="navbarNavAltMarkup" aria-expanded="false" aria-label="Toggle navigation">
       <span class="navbar-toggler-icon"></span>
     </button>
     <div class="collapse navbar-collapse" id="navbarNavAltMarkup">
       <div class="navbar-nav">
         <a class="nav-item nav-link" href="/urls">My URLs</a>
         <a class="nav-item nav-link" href="/urls/new">Create New URL</a>
+        <!-- username form -->
+        <% if (username) { %>
+          <p>Username : <%= username %></p> 
+          <form class="form-inline" action="/logout" method="POST" style="padding-left: 5em">
+            <button class="btn btn-primary" name="logout" >LOGOUT</button>
+          </form>
+        <% } else { %>
+        <form class="form-inline" action="/login" method="POST" style="padding-left: 5em">
+          <input class="form-control" type="text" name="username" placeholder="username" style="width: 200px">
+        </form>
+        <% } %>
       </div>
     </div>
+    
+
+    
+     
+
+
+
+
+
   </nav>
 </header>
