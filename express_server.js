@@ -49,7 +49,7 @@ function generateRandomString() {
 
 // ----- new URL page ------ //
 app.get("/urls/new", (req, res) => {
-  let templateVars = { username : users[req.cookies['user_id']].email };
+  let templateVars = { username : users[req.cookies['user_id']] };
   console.log('New URL')
   res.render("urls_new", templateVars);
 });
@@ -65,7 +65,7 @@ app.post("/urls", (req, res) => {
 // ----- List of URLs ------ //
 app.get("/urls", (req, res) => { 
   console.log(req.cookies['user_id'])
-  let templateVars = { urls: urlDatabase, username : users[req.cookies['user_id']].email  };
+  let templateVars = { urls: urlDatabase, username : users[req.cookies['user_id']] };
   
   console.log('templateVars', templateVars)
   console.log('Main Page')
@@ -75,7 +75,8 @@ app.get("/urls", (req, res) => {
 
 // ----- Register Page ------ //
 app.get("/register", (req, res) => {
-  res.render("urls_register");
+  let templateVars = { username : users[req.cookies['user_id']] };
+  res.render("urls_register", templateVars);
 });
 
 // ----- Register A new account ------ //
@@ -94,9 +95,30 @@ app.post("/register", (req, res) => {
 
 });
 
+// ----- Login Page ------ //
+app.get("/login", (req, res) => {
+  let templateVars = { username : users[req.cookies['user_id']] };
+  res.render("urls_login", templateVars);
+});
+
+// ----- Login to account ------ //
+app.post("/login", (req, res) => {
+  console.log('LOGIN', req.body.email, req.body.password);
+
+  if (checkEmailIsInUse(users, req.body.email)) {
+    
+  };
+  //  } else { 
+  //    res.status(400).send(`Either your email is in use. Or the password feild is blank`);
+  // }
+
+});
+
+
+
 // ----- Show URL ------ //
 app.get("/urls/:shortURL", (req, res) => {
-  let templateVars = { shortURL: req.params.shortURL, longURL: urlDatabase[req.params.shortURL], username : users[req.cookies['user_id']].email };
+  let templateVars = { shortURL: req.params.shortURL, longURL: urlDatabase[req.params.shortURL], username : users[req.cookies['user_id']] };
   console.log('SHOW URL', req.params.shortURL)
   res.render("urls_show", templateVars);
 });
@@ -145,3 +167,12 @@ app.post("/urls/:shortURL", (req, res) => {
 app.listen(PORT, () => {
   console.log(`Example app listening on port ${PORT}!`)
 });
+
+
+const returnPassword = (object, email) => {
+  const keys = Object.keys(object);
+  
+
+
+
+};
