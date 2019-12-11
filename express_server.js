@@ -4,6 +4,8 @@ var cookieParser = require('cookie-parser')
 app.use(cookieParser())
 const PORT = 8080;
 
+const bcrypt = require('bcrypt');
+
 const bodyParser = require("body-parser");
 app.use(bodyParser.urlencoded({ extended: true }));
 
@@ -119,7 +121,7 @@ app.post("/register", (req, res) => {
   const idNum = generateRandomString()
 
   if (!checkEmailIsInUse(users, req.body.email) && req.body.password) {
-    users[idNum] = { id: idNum, email: req.body.email, password: req.body.password };
+    users[idNum] = { id: idNum, email: req.body.email, password: bcrypt.hashSync(req.body.password, 10) };
     res.cookie('user_id', idNum);
     console.log('users[idNum]', idNum)
     res.redirect('/urls');
@@ -138,9 +140,11 @@ app.get("/login", (req, res) => {
 // ----- Login to account ------ //
 app.post("/login", (req, res) => {
   console.log('LOGIN', req.body.email, req.body.password);
-
+  if (req.body.email === '' || req.body.password === '') {
+    res.status(404).send(`One of these feilds are blank`);
+  }
   if (checkEmailIsInUse(users, req.body.email)) {
-    if (users[returnID(users, req.body.email)].password === req.body.password) {
+    if (bcrypt.compareSync(req.body.password, users[returnID(users, req.body.email)].password)) {
       res.cookie('user_id', returnID(users, req.body.email));
       res.redirect('/urls');
     }
