@@ -27,9 +27,26 @@ const users = {
     id: "user2RandomID",
     email: "user2@example.com",
     password: "dishwasher-funk"
+  },
+  "JaPrince": {
+    id: "JaPrince",
+    email: "jamie@gmail.com",
+    password: "1234"
   }
 };
 
+// Returns Users ID  of email that is entered
+const returnID = (object, email) => {
+  const keys = Object.keys(object)
+  for (let i = 0; i < keys.length; i++){
+    if (object[keys[i]].email === email) {
+      return keys[i]
+    }
+  }
+
+  return false;
+  
+};
 
 
 // return true if email is already in use 
@@ -49,7 +66,7 @@ function generateRandomString() {
 
 // ----- new URL page ------ //
 app.get("/urls/new", (req, res) => {
-  let templateVars = { username : users[req.cookies['user_id']] };
+  let templateVars = { user : users[req.cookies['user_id']].email };
   console.log('New URL')
   res.render("urls_new", templateVars);
 });
@@ -62,10 +79,10 @@ app.post("/urls", (req, res) => {
   res.redirect(`/urls/${makeURL}`)
 });
 
-// ----- List of URLs ------ //
+// ----- List of URLs age ------ //
 app.get("/urls", (req, res) => { 
   console.log(req.cookies['user_id'])
-  let templateVars = { urls: urlDatabase, username : users[req.cookies['user_id']] };
+  let templateVars = { urls: urlDatabase, user : users[req.cookies['user_id']].email};
   
   console.log('templateVars', templateVars)
   console.log('Main Page')
@@ -75,7 +92,7 @@ app.get("/urls", (req, res) => {
 
 // ----- Register Page ------ //
 app.get("/register", (req, res) => {
-  let templateVars = { username : users[req.cookies['user_id']] };
+  let templateVars = { user : users[req.cookies['user_id']] };
   res.render("urls_register", templateVars);
 });
 
@@ -97,7 +114,7 @@ app.post("/register", (req, res) => {
 
 // ----- Login Page ------ //
 app.get("/login", (req, res) => {
-  let templateVars = { username : users[req.cookies['user_id']] };
+  let templateVars = { user : users[req.cookies['user_id']] };
   res.render("urls_login", templateVars);
 });
 
@@ -106,11 +123,15 @@ app.post("/login", (req, res) => {
   console.log('LOGIN', req.body.email, req.body.password);
 
   if (checkEmailIsInUse(users, req.body.email)) {
-    
-  };
-  //  } else { 
-  //    res.status(400).send(`Either your email is in use. Or the password feild is blank`);
-  // }
+    if (users[returnID(users, req.body.email)].password === req.body.password) {
+      res.cookie('user_id', returnID(users, req.body.email));
+      res.redirect('/urls');
+    } 
+  } else {
+    res.status(404).send(`NICE TRY HACKER`);
+  }
+  
+  
 
 });
 
@@ -118,23 +139,23 @@ app.post("/login", (req, res) => {
 
 // ----- Show URL ------ //
 app.get("/urls/:shortURL", (req, res) => {
-  let templateVars = { shortURL: req.params.shortURL, longURL: urlDatabase[req.params.shortURL], username : users[req.cookies['user_id']] };
+  let templateVars = { shortURL: req.params.shortURL, longURL: urlDatabase[req.params.shortURL], user : users[req.cookies['user_id']].email };
   console.log('SHOW URL', req.params.shortURL)
   res.render("urls_show", templateVars);
 });
 
 
-// ----- LOGIN  ------ //
-app.post("/login", (req, res) => {
-  console.log('SHOW USERNAME', req.body.username)
-  res.cookie('username', req.body.username)
-  res.redirect('/urls')
-});
+// // ----- LOGIN  ------ //
+// app.post("/login", (req, res) => {
+//   console.log('SHOW USERNAME', req.body.username)
+//   res.cookie('username', req.body.username)
+//   res.redirect('/urls')
+// });
 
 // ----- LOGOUT ------ //
 app.post("/logout", (req, res) => {
-  res.clearCookie('username');
-  res.redirect('/urls')
+  res.clearCookie('user_id');
+  res.redirect('/login')
 });
 
 
@@ -169,10 +190,5 @@ app.listen(PORT, () => {
 });
 
 
-const returnPassword = (object, email) => {
-  const keys = Object.keys(object);
-  
 
 
-
-};
