@@ -2,10 +2,10 @@ const express = require('express');
 const app = express();
 var cookieParser = require('cookie-parser')
 app.use(cookieParser())
-const PORT = 8080; 
+const PORT = 8080;
 
 const bodyParser = require("body-parser");
-app.use(bodyParser.urlencoded({extended: true}));
+app.use(bodyParser.urlencoded({ extended: true }));
 
 
 
@@ -17,15 +17,15 @@ const urlDatabase = {
   '7xc3lK': 'http://tsn.ca'
 };
 
-const users = { 
+const users = {
   "userRandomID": {
-    id: "userRandomID", 
-    email: "user@example.com", 
+    id: "userRandomID",
+    email: "user@example.com",
     password: "purple-monkey-dinosaur"
   },
- "user2RandomID": {
-    id: "user2RandomID", 
-    email: "user2@example.com", 
+  "user2RandomID": {
+    id: "user2RandomID",
+    email: "user2@example.com",
     password: "dishwasher-funk"
   }
 };
@@ -34,22 +34,22 @@ const users = {
 
 // return true if email is already in use 
 const checkEmailIsInUse = (object, email) => {
-  const values = Object.values(object).filter(o =>  o.email === email);
-  
+  const values = Object.values(object).filter(o => o.email === email);
+
   if (values.length) {
     return true;
   }
-  
+
   return false;
 };
 // ----- Generate Random String ------ //
 function generateRandomString() {
   return Math.random().toString(36).slice(5)
- }
+}
 
 // ----- new URL page ------ //
 app.get("/urls/new", (req, res) => {
-  let templateVars = { username: req.cookies["username"] };
+  let templateVars = { username : users[req.cookies['user_id']].email };
   console.log('New URL')
   res.render("urls_new", templateVars);
 });
@@ -63,8 +63,11 @@ app.post("/urls", (req, res) => {
 });
 
 // ----- List of URLs ------ //
-app.get("/urls", (req, res) => {
-  let templateVars = { urls: urlDatabase , username: req.cookies["username"] };
+app.get("/urls", (req, res) => { 
+  console.log(req.cookies['user_id'])
+  let templateVars = { urls: urlDatabase, username : users[req.cookies['user_id']].email  };
+  
+  console.log('templateVars', templateVars)
   console.log('Main Page')
   res.render("urls_index", templateVars);
 });
@@ -75,19 +78,25 @@ app.get("/register", (req, res) => {
   res.render("urls_register");
 });
 
-// ----- Register Page ------ //
+// ----- Register A new account ------ //
 app.post("/register", (req, res) => {
-  console.log('REGISTER',req.body.email, req.body.password);
+  console.log('REGISTER', req.body.email, req.body.password);
   const idNum = generateRandomString()
-  users[idNum] = { id: idNum, email: req.body.email, password: req.body.password };
-  res.cookie('user_id', req.body.email);
-  console.log(users);
-  res.redirect('/urls');
+
+  if (!checkEmailIsInUse(users, req.body.email) && req.body.password) {
+    users[idNum] = { id: idNum, email: req.body.email, password: req.body.password };
+    res.cookie('user_id', idNum);
+    console.log('users[idNum]',idNum)
+    res.redirect('/urls');
+  } else { 
+    res.status(400).send(`Either your email is in use. Or the password feild is blank`);
+  }
+
 });
 
 // ----- Show URL ------ //
 app.get("/urls/:shortURL", (req, res) => {
-  let templateVars = { shortURL: req.params.shortURL, longURL: urlDatabase[req.params.shortURL] , username: req.cookies["username"] };
+  let templateVars = { shortURL: req.params.shortURL, longURL: urlDatabase[req.params.shortURL], username : users[req.cookies['user_id']].email };
   console.log('SHOW URL', req.params.shortURL)
   res.render("urls_show", templateVars);
 });
@@ -110,10 +119,10 @@ app.post("/logout", (req, res) => {
 // ----- Redirect URL ------ //
 app.get("/u/:shortURL", (req, res) => {
   const longURL = urlDatabase[req.params.shortURL]
-  if(longURL) {
-  console.log('REDIRECT')
-  res.redirect(longURL);
-  } 
+  if (longURL) {
+    console.log('REDIRECT')
+    res.redirect(longURL);
+  }
 });
 
 // ----- Delete URL ------ //
@@ -129,9 +138,8 @@ app.post("/urls/:shortURL", (req, res) => {
   console.log('EDIT', req.params.shortURL, req.body.editURL);
   urlDatabase[req.params.shortURL] = req.body.editURL
   console.log(urlDatabase)
- res.redirect(`/urls`)
+  res.redirect(`/urls`)
 });
-
 
 
 app.listen(PORT, () => {
