@@ -10,12 +10,11 @@
 </head>
 <body>
   <%- include('partials/_header') %>
+  
   <main style="margin: 1em;">
-    <% if (!user) { %>
+    <% if (!user) { %>  
 
       <h1>PLease Login</h1>
-
-
 
    <% } else { %>
     <h3>My URLs</h3>
@@ -33,7 +32,7 @@
         
 
 
-
+        <% console.log(urls) %>
         <% for(let url in urls) { %> 
           <tr>
             

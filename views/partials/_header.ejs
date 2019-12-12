@@ -11,7 +11,7 @@
         <a class="nav-item nav-link" href="/urls/new">Create New URL</a>
         <!-- username form -->
         <% if (user) { %>
-          <p>Username : <%= user %></p> 
+          Username : <%= user.email %>
           <form class="form-inline" action="/logout" method="POST" style="padding-left: 5em">
             <button class="btn btn-primary" name="logout" >LOGOUT</button>
           </form>

@@ -1,8 +1,11 @@
+
 const bcrypt = require('bcrypt');
 const express = require('express');
 const bodyParser = require("body-parser");
 const cookieParser = require('cookie-parser');
 const cookieSession = require('cookie-session');
+const { returnID, urlsForUser,  checkEmailIsInUse, generateRandomString } = require('./helpers');
+
 
 const PORT = 8080;
 const app = express();
@@ -33,52 +36,12 @@ const users = {
   }
 };
 
-//  ------ FUNCTION | RETURNS OBJECT OF USER ID'S URLS ------  //
-const urlsForUser = id => {
-  const urlKeys = Object.keys(urlDatabase);
-  let  usersUrlList = {};
-  for (let i = 0; i < urlKeys.length; i++) {
-    if (urlDatabase[urlKeys[i]].userID === id) {
-      usersUrlList[urlKeys[i]] = urlDatabase[urlKeys[i]];
-    }
-  }
-  return usersUrlList;
-};
-
-//  ------ FUNCTION | RETURNS THE USER ID OF EMAIL PARAMETER ------  //
-const returnID = (object, email) => {
-  const keys = Object.keys(object);
-  for (let i = 0; i < keys.length; i++) {
-    if (object[keys[i]].email === email) {
-      return keys[i];
-    }
-  }
-  return false;
-
-};
-
-//  ------ FUNCTION | RETURN TRUE IF EMAIL IS IN USE ------ //
-const checkEmailIsInUse = (object, email) => {
-  const values = Object.values(object).filter(o => o.email === email);
-
-  if (values.length) {
-    return true;
-  }
-
-  return false;
-};
-
-// ----- FUNCTION | GENERATE UNIQUE ID ------ //
-const generateRandomString = () => {
-  return Math.random().toString(36).slice(5);
-};
-
 // ----- GET / MAKE NEW URL PAGE ------ //
 app.get("/urls/new", (req, res) => {
   if (!users[req.session.user_id]) {
     res.redirect('/login');
   } else {
-    let templateVars = { user: users[req.session.user_id].email };
+    let templateVars = { user: users[req.session.user_id] };
     res.render("urls_new", templateVars);
   }
 
@@ -88,19 +51,17 @@ app.get("/urls/new", (req, res) => {
 app.post("/urls", (req, res) => {
   const makeURL = generateRandomString();
   urlDatabase[makeURL] = { longURL: req.body.longURL, userID: req.session.user_id };
+  console.log(urlDatabase)
   res.redirect(`/urls/${makeURL}`);
 });
 
 // ----- GET / URLS PAGE ------ //
 app.get("/urls", (req, res) => {
-  if (req.session.user_id) {
-    let templateVars = { urls: urlsForUser(req.session.user_id) , user: users[req.session.user_id].email };
+  console.log('urlsForUser', urlsForUser(req.session.user_id, urlDatabase));
+  let templateVars = { urls: urlsForUser(req.session.user_id, urlDatabase) , user: users[req.session.user_id] };
     res.render("urls_index", templateVars);
-  } else {
-    res.status(404).send(`NICE TRY HACKER`);
-  }
-});
 
+});
 
 // ----- GET / REGISTER PAGE ------ //
 app.get("/register", (req, res) => {
@@ -125,6 +86,10 @@ app.post("/register", (req, res) => {
 // ----- GET / LOGIN PAGE ------ //
 app.get("/login", (req, res) => {
   let templateVars = { user: users[req.session.user_id] };
+  
+  if (users[req.session.user_id]) {
+    res.redirect('/urls')
+  }
   res.render("urls_login", templateVars);
 });
 
@@ -149,7 +114,7 @@ app.post("/login", (req, res) => {
 // ----- GET / SHOW && EDIT SHORT URL PAGE ------ //
 app.get("/urls/:shortURL", (req, res) => {
   if (users[req.session.user_id]) {
-    let templateVars = { shortURL: req.params.shortURL, longURL: urlDatabase[req.params.shortURL].longURL , user: users[req.session.user_id].email };
+    let templateVars = { shortURL: req.params.shortURL, longURL: urlDatabase[req.params.shortURL].longURL , user: users[req.session.user_id] };
     res.render("urls_show", templateVars);
   } else {
     res.redirect('/login');
