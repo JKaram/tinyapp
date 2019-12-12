@@ -9,6 +9,28 @@ const returnID = (object, email) => {
   return false;
 };
 
+
+//  ------ FUNCTION | RETURNS TRUE IF SHORT URL IS NOT IN DATABASE ------  //
+const checkShortURL = (url, object) => {
+  const keys = Object.keys(object);
+  if (!keys.includes(url)) {
+    return true;
+  }
+  return false;
+};
+
+
+//  ------ FUNCTION | RETURNS THE USER ID OF EMAIL PARAMETER ------  //
+const checkURL = (url, object ) => {
+  const keys = Object.keys(object);
+  for (let i = 0; i < keys.length; i++) {
+    if (object[keys[i]] === url) {
+      return keys[i];
+    }
+  }
+  return false;
+};
+
 //  ------ FUNCTION | RETURNS OBJECT OF USER ID'S URLS ------  //
 const urlsForUser = (id, object) => {
   const urlKeys = Object.keys(object);
@@ -24,11 +46,9 @@ const urlsForUser = (id, object) => {
 //  ------ FUNCTION | RETURN TRUE IF EMAIL IS IN USE ------ //
 const checkEmailIsInUse = (object, email) => {
   const values = Object.values(object).filter(o => o.email === email);
-
   if (values.length) {
     return true;
   }
-
   return false;
 };
 
@@ -38,4 +58,4 @@ const generateRandomString = () => {
 };
 
 
-module.exports = { returnID, urlsForUser, checkEmailIsInUse, generateRandomString }
+module.exports = { returnID, urlsForUser, checkEmailIsInUse, generateRandomString, checkShortURL, checkURL }

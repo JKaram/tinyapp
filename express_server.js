@@ -1,15 +1,13 @@
-
 const bcrypt = require('bcrypt');
 const express = require('express');
 const bodyParser = require("body-parser");
 const cookieParser = require('cookie-parser');
 const cookieSession = require('cookie-session');
-const { returnID, urlsForUser,  checkEmailIsInUse, generateRandomString } = require('./helpers');
+const { returnID, urlsForUser,  checkEmailIsInUse, generateRandomString , checkShortURL , checkURL } = require('./helpers');
 
 
 const PORT = 8080;
 const app = express();
-
 
 
 app.use(cookieParser());
@@ -23,10 +21,11 @@ app.use(cookieSession({
 
 
 const urlDatabase = {
-  "b2xVn2": { longURL: "http://www.lighthouselabs.ca" , userID: 'test' },
-  "w2xEk2": { longURL: "http://www.google.com" , userID: 'test' },
-  "426744": { longURL: "http://www.reddit.com" , userID: 'test' }
+  "b2xVn2": { longURL: "http://www.lighthouselabs.ca" , dateCreated : 'Dec 12 2019', timesVisited: 0, userID: 'test' },
+  "w2xEk2": { longURL: "http://www.google.com" , dateCreated : 'Dec 12 2019', timesVisited: 1, userID: 'test' },
+  "426744": { longURL: "http://www.reddit.com" , dateCreated : 'Dec 12 2019', timesVisited: 0, userID: 'test' }
 };
+
 
 const users = {
   "test": {
@@ -35,6 +34,11 @@ const users = {
     password: bcrypt.hashSync("1234", 10)
   }
 };
+
+// ----- GET / REDIRECT TO URLS PAGE ------ //
+app.get("/", (req, res) => {
+  res.redirect('/urls');
+});
 
 // ----- GET / MAKE NEW URL PAGE ------ //
 app.get("/urls/new", (req, res) => {
@@ -50,21 +54,26 @@ app.get("/urls/new", (req, res) => {
 // ----- POST / MAKE NEW SHORT URL && REDIRECT TO SHOW & EDIT SHORT URL PAGE  ------ //
 app.post("/urls", (req, res) => {
   const makeURL = generateRandomString();
-  urlDatabase[makeURL] = { longURL: req.body.longURL, userID: req.session.user_id };
-  console.log(urlDatabase)
+  const timeInMils = new Date().getTime();
+  const timeInString = new Date(timeInMils).toString().slice(4, 15);
+
+  urlDatabase[makeURL] = { longURL: req.body.longURL, dateCreated : timeInString, timesVisited : 0, userID: req.session.user_id };
+  console.log('MAKE URL --------------->', urlDatabase);
   res.redirect(`/urls/${makeURL}`);
 });
 
 // ----- GET / URLS PAGE ------ //
 app.get("/urls", (req, res) => {
-  console.log('urlsForUser', urlsForUser(req.session.user_id, urlDatabase));
   let templateVars = { urls: urlsForUser(req.session.user_id, urlDatabase) , user: users[req.session.user_id] };
     res.render("urls_index", templateVars);
-
 });
 
 // ----- GET / REGISTER PAGE ------ //
 app.get("/register", (req, res) => {
+  if (req.session.user_id) {
+    res.redirect('/urls');
+  }
+
   let templateVars = { user: users[req.session.user_id] };
   res.render("urls_register", templateVars);
 });
@@ -72,7 +81,7 @@ app.get("/register", (req, res) => {
 // ----- POST / REGISTER A NEW ACCOUNT ------ //
 app.post("/register", (req, res) => {
   const idNum = generateRandomString();
-
+  
   if (!checkEmailIsInUse(users, req.body.email) && req.body.password) {
     users[idNum] = { id: idNum, email: req.body.email, password: bcrypt.hashSync(req.body.password, 10) };
     req.session.user_id =  idNum;
@@ -80,7 +89,6 @@ app.post("/register", (req, res) => {
   } else {
     res.status(400).send(`Either your email is in use. Or the password feild is blank`);
   }
-
 });
 
 // ----- GET / LOGIN PAGE ------ //
@@ -113,12 +121,20 @@ app.post("/login", (req, res) => {
 
 // ----- GET / SHOW && EDIT SHORT URL PAGE ------ //
 app.get("/urls/:shortURL", (req, res) => {
-  if (users[req.session.user_id]) {
+  
+  if (checkShortURL(req.params.shortURL, urlDatabase)) {
+    res.status(401).send(`This Short URL does not exist`);
+  }
+  
+  let usersURLS =  Object.keys(urlsForUser(req.session.user_id, urlDatabase)); 
+
+  if (usersURLS.includes(req.params.shortURL)) {
     let templateVars = { shortURL: req.params.shortURL, longURL: urlDatabase[req.params.shortURL].longURL , user: users[req.session.user_id] };
     res.render("urls_show", templateVars);
   } else {
-    res.redirect('/login');
+    res.status(404).send(`You cannot edit this URL`);
   }
+
 });
 
 
@@ -131,14 +147,23 @@ app.post("/logout", (req, res) => {
 
 // ----- Redirect URL ------ //
 app.get("/u/:shortURL", (req, res) => {
-  const longURL = urlDatabase[req.params.shortURL].longURL;
-  if (longURL) {
-    res.redirect(longURL);
-  }
+  
+  console.log('SHORT URL -------->',req.params.shortURL )
+  console.log('URL DATABASE -------->',urlDatabase )
+  console.log('CheckShortURL -------->',checkShortURL(req.params.shortURL, urlDatabase))
+  if (checkShortURL(req.params.shortURL, urlDatabase)) {
+    res.status(401).send(`This Short URL does not exist`)
+  } else {
+    urlDatabase[req.params.shortURL].timesVisited += 1;
+    console.log('TIMES VISiTED --->', req.params.shortURL, urlDatabase[req.params.shortURL].timesVisited)
+    res.redirect(urlDatabase[req.params.shortURL].longURL);
+  } 
 });
 
 // ----- Delete URL ------ //
 app.post("/urls/:shortURL/delete", (req, res) => {
+  
+  
   if (req.session.user_id) {
     delete urlDatabase[req.params.shortURL];
     res.redirect(`/urls`);
@@ -150,7 +175,7 @@ app.post("/urls/:shortURL/delete", (req, res) => {
 
 // ----- EDIT URL ------ //
 app.post("/urls/:shortURL", (req, res) => {
-  urlDatabase[req.params.shortURL] = { longURL: req.body.editURL, userID: req.session.user_id };
+  urlDatabase[req.params.shortURL] = { longURL: req.body.editURL, dateCreated: urlDatabase[req.params.shortURL].dateCreated, timesVisited: urlDatabase[req.params.shortURL].timesVisited, userID: req.session.user_id };
   res.redirect(`/urls`);
 });
 

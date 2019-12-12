@@ -23,6 +23,8 @@
         <tr>
           <th scope="col">Short URL</th>
           <th scope="col">Long URL</th>
+          <th scope="col">Date Created</th>
+          <th scope="col">Times Visted</th>
           <th scope="col">EDIT</th>
           <th scope="col">DELETE</th>
         </tr>
@@ -32,13 +34,17 @@
         
 
 
-        <% console.log(urls) %>
+  
         <% for(let url in urls) { %> 
           <tr>
             
             <td><%= url %></td>
             
             <td><%= urls[url].longURL %></td>
+
+            <td><%= urls[url].dateCreated %></td>
+            <% console.log(urls[url]) %>
+            <td><%= urls[url].timesVisited %></td>
             
 
             <td><form method="GET" action='/urls/<%= url %>'><button class='btn btn-outline-primary'>EDIT</button></form></td>
