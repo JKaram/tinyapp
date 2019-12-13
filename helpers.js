@@ -21,7 +21,7 @@ const checkShortURL = (url, object) => {
 
 
 //  ------ FUNCTION | RETURNS THE USER ID OF EMAIL PARAMETER ------  //
-const checkURL = (url, object ) => {
+const checkURL = (url, object) => {
   const keys = Object.keys(object);
   for (let i = 0; i < keys.length; i++) {
     if (object[keys[i]] === url) {
@@ -54,8 +54,8 @@ const checkEmailIsInUse = (object, email) => {
 
 // ----- FUNCTION | GENERATE UNIQUE ID ------ //
 const generateRandomString = () => {
-  return Math.random().toString(36).slice(2);
+  return Math.random().toString(36).slice(5);
 };
 
 
-module.exports = { returnID, urlsForUser, checkEmailIsInUse, generateRandomString, checkShortURL, checkURL }
+module.exports = { returnID, urlsForUser, checkEmailIsInUse, generateRandomString, checkShortURL, checkURL };

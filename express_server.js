@@ -56,6 +56,14 @@ app.post("/urls", (req, res) => {
   const makeURL = generateRandomString();
   const timeInMils = new Date().getTime();
   const timeInString = new Date(timeInMils).toString().slice(4, 15);
+  
+  if (req.body.longURL === '') {
+    res.status(400).send(`This field is blank`);
+  }
+  console.log('SUBSTRING -------->',req.body.longURL.substring(0,7))
+  if (req.body.longURL.substring(0,7) !== 'http://') {
+    req.body.longURL = 'http://' + req.body.longURL;
+  };
 
   urlDatabase[makeURL] = { longURL: req.body.longURL, dateCreated : timeInString, timesVisited : 0, userID: req.session.user_id };
   
